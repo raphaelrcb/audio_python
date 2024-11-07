@@ -1,16 +1,91 @@
-# This is a sample Python script.
+import pyaudio
+import wave
+import speech_recognition as sr
+from speech_recognition import Microphone
 
-# Press Ctrl+F5 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+def play_audio(filename):
+    chunk = 1024
+    wf = wave.open(filename, 'rb')
+    pa = pyaudio.PyAudio()
+
+    stream = pa.open(
+        format=pa.get_format_from_width(wf.getsampwidth()),
+        channels=wf.getnchannels(),
+        rate=wf.getframerate(),
+        output=True
+    )
+
+    data_stream = wf.readframes(chunk)
+
+    while data_stream:
+        stream.write(data_stream)
+        data_stream = wf.readframes(chunk)
+
+    stream.close()
+    pa.terminate()
+
+def initSpeech(r, mic_index):
+    #ajustando sensibilidade do microfone
+    r.energy_threshold = 300
+
+    print("Fala tu que eu te escuto")
+    play_audio("./audio/franky_aaaau.wav")
+    print("AGORA")
+    with sr.Microphone(mic_index) as source:
+        r.adjust_for_ambient_noise(source, duration=1)
+        audio = r.listen(source, timeout=5, phrase_time_limit=10)
+
+    play_audio("./audio/catcha_one_piece.wav")
+    print(audio.sample_rate)
+    print("fim audio")
+    command = ""
+
+    with open("resultado.wav", "wb") as f:
+        f.write(audio.get_wav_data())
+
+    try:
+        command = r.recognize_google(audio)
+        print("Você disse:")
+        print(command)
+    except sr.UnknownValueError:
+        print("Google disse: Fala direito mermão")
+        print(command)
+    except sr.RequestError as e:
+        print(f"Erro de reconhecimento; {e}")
+
+    try:
+        command = r.recognize_sphinx(audio)
+        print("Você disse:")
+        print(command)
+    except sr.UnknownValueError:
+        print("Sphinx disse: NÃO CONSIGO LER NADA")
+        print(command)
+    except sr.RequestError as e:
+        print(f"Erro de reconhecimento; {e}")
+
+def CheckMic():
+    m = None
+    index = None
+    name = ""
+
+    for i, microphone_name in enumerate(Microphone.list_microphone_names()):
+        if microphone_name == 'Padrão (Tecnologia Intel® Smart' or i == 1:
+            m = Microphone(device_index=i)
+            name = microphone_name
+            index = i
+
+    if m is not None:
+        print(name)
+        print("Mic ready")
+        return index
+    else:
+        print ("Mic not found")
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press F9 to toggle the breakpoint.
 
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    print("Checking Mic")
+    mic_index = CheckMic()
+    r = sr.Recognizer()
+    if mic_index:
+        initSpeech(r, mic_index)

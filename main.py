@@ -2,6 +2,13 @@ import pyaudio
 import wave
 import speech_recognition as sr
 from speech_recognition import Microphone
+import subprocess
+
+def say(text):
+    print(text)
+    call_string = "echo " + text + " | cscript \"C:\\Program Files\\Jampal\\ptts.vbs\""
+    print(call_string)
+    subprocess.call(call_string, shell=True)
 
 def play_audio(filename):
     chunk = 1024
@@ -44,9 +51,10 @@ def initSpeech(r, mic_index):
         f.write(audio.get_wav_data())
 
     try:
-        command = r.recognize_google(audio)
+        command = r.recognize_google(audio, language="pt-BR")
         print("Você disse:")
         print(command)
+        say("Você disse: " + command)
     except sr.UnknownValueError:
         print("Google disse: Fala direito mermão")
         print(command)
@@ -54,7 +62,7 @@ def initSpeech(r, mic_index):
         print(f"Erro de reconhecimento; {e}")
 
     try:
-        command = r.recognize_sphinx(audio)
+        command = r.recognize_sphinx(audio, language="pt-BR")
         print("Você disse:")
         print(command)
     except sr.UnknownValueError:
@@ -80,7 +88,6 @@ def CheckMic():
         return index
     else:
         print ("Mic not found")
-
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@ import wave
 import speech_recognition as sr
 from speech_recognition import Microphone
 import subprocess
+from commands import Commander
 
 def say(text):
     print(text)
@@ -33,6 +34,7 @@ def play_audio(filename):
 
 def initSpeech(r, mic_index):
     #ajustando sensibilidade do microfone
+    cmd = Commander()
     r.energy_threshold = 300
 
     print("Fala tu que eu te escuto")
@@ -43,8 +45,6 @@ def initSpeech(r, mic_index):
         audio = r.listen(source, timeout=5, phrase_time_limit=10)
 
     play_audio("./audio/catcha_one_piece.wav")
-    print(audio.sample_rate)
-    print("fim audio")
     command = ""
 
     with open("resultado.wav", "wb") as f:
@@ -54,22 +54,16 @@ def initSpeech(r, mic_index):
         command = r.recognize_google(audio, language="pt-BR")
         print("Você disse:")
         print(command)
-        say("Você disse: " + command)
     except sr.UnknownValueError:
         print("Google disse: Fala direito mermão")
         print(command)
     except sr.RequestError as e:
         print(f"Erro de reconhecimento; {e}")
 
-    try:
-        command = r.recognize_sphinx(audio, language="pt-BR")
-        print("Você disse:")
-        print(command)
-    except sr.UnknownValueError:
-        print("Sphinx disse: NÃO CONSIGO LER NADA")
-        print(command)
-    except sr.RequestError as e:
-        print(f"Erro de reconhecimento; {e}")
+    cmd.discover(command)
+    if command == "sair":
+        return False
+    return True
 
 def CheckMic():
     m = None
@@ -94,5 +88,7 @@ if __name__ == '__main__':
     print("Checking Mic")
     mic_index = CheckMic()
     r = sr.Recognizer()
+    running = True
     if mic_index:
-        initSpeech(r, mic_index)
+        while running:
+            running = initSpeech(r, mic_index)
